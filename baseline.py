@@ -1,7 +1,8 @@
 import torch
 from transformers import BertForSequenceClassification, AdamW, BertConfig
 from transformers import BertTokenizer, BertModel
-from transformers import get_linear_schedule_with_warmup
+#from transformers import get_linear_schedule_with_warmup
+from transformers import WarmupLinearSchedule as get_linear_schedule_with_warmup
 import numpy as np
 import argparse
 from tqdm import tqdm 
@@ -17,12 +18,7 @@ parser.add_argument('--lr', type=float, default=2e-5)
 
 args = parser.parse_args()
 
-def flat_accuracy(preds, labels):
-    pred_flat = np.argmax(preds, axis=1).flatten()
-    labels_flat = labels.flatten()
-    return np.sum(pred_flat == labels_flat) / len(labels_flat)
-
-random.seed(args.seed))
+random.seed(args.seed)
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
 torch.cuda.manual_seed_all(args.seed)
@@ -36,24 +32,24 @@ tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=Tru
 model = BertForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=2)
 model = model.to(device)
 
-train_dataloader, validation_dataloader, test_dataloader = get_dataloader(args.datafile, args.batch_size, tokenizer)
+train_dataloader, validation_dataloader, test_dataloader = get_dataloader(args.data_file, args.batch_size, tokenizer)
 
 optimizer = AdamW(model.parameters(),lr = args.lr)
 total_steps = len(train_dataloader) * args.epochs
 scheduler = get_linear_schedule_with_warmup(optimizer, 
-                                            num_warmup_steps = 0, # Default value in run_glue.py
-                                            num_training_steps = total_steps)
+                                            warmup_steps = 0, # Default value in run_glue.py
+                                            t_total = total_steps)
 
 loss_values = []
 best_eval_acc = 0
 test_acc = 0
 
-for epoch_i in range(0, epochs):
+for epoch_i in range(0, args.epochs):
     total_loss = 0
     model.train()
         
     # For each batch of training data...
-    for step, batch in enumerate(train_dataloader):
+    for step, batch in tqdm(enumerate(train_dataloader)):
         model.train()
         
         b_input_ids = batch[0].to(device)
@@ -88,7 +84,7 @@ for epoch_i in range(0, epochs):
     if eval_accuracy > best_eval_acc:
         best_eval_acc = eval_accuracy
         test_accuracy = get_acc(model, test_dataloader, device)
-
+    print(" Val acc {}, test acc {}".format(eval_accuracy, test_accuracy))
 
 print("")
 print("Training complete!")

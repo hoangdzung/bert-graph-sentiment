@@ -4,6 +4,7 @@ from torch.utils.data import TensorDataset, DataLoader, RandomSampler, Sequentia
 from transformers import BertTokenizer
 from keras.preprocessing.sequence import pad_sequences
 from tqdm import tqdm 
+import numpy as np
 
 def get_dataloader(datafile, batch_size, tokenizer):
     df = pd.read_pickle(datafile)
@@ -13,9 +14,9 @@ def get_dataloader(datafile, batch_size, tokenizer):
     dev_sentences = df[df['split']=='dev'].sentence.values
     test_sentences = df[df['split']=='test'].sentence.values
 
-    train_labels = df[df['split']=='train'].label.values
-    validation_labels = df[df['split']=='dev'].label.values
-    test_labels = df[df['split']=='test'].label.values
+    train_labels = df[df['split']=='train'].label.values.astype(int)
+    validation_labels = df[df['split']=='dev'].label.values.astype(int)
+    test_labels = df[df['split']=='test'].label.values.astype(int)
 
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 
@@ -90,6 +91,10 @@ def get_dataloader(datafile, batch_size, tokenizer):
 
     return train_dataloader, validation_dataloader, test_dataloader
 
+def flat_accuracy(preds, labels):
+    pred_flat = np.argmax(preds, axis=1).flatten()
+    labels_flat = labels.flatten()
+    return np.sum(pred_flat == labels_flat) / len(labels_flat)
 
 def get_acc(model, validation_dataloader, device):
     model.eval()
