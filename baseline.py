@@ -7,7 +7,8 @@ import numpy as np
 import argparse
 from tqdm import tqdm 
 import random
-from utils import get_dataloader, get_acc
+from utils.dataset.baseline import get_baseline_dataloader
+from utils import get_acc
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_file', default='data/SST2.pkl')
@@ -32,7 +33,7 @@ tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=Tru
 model = BertForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=2)
 model = model.to(device)
 
-train_dataloader, validation_dataloader, test_dataloader = get_dataloader(args.data_file, args.batch_size, tokenizer)
+train_dataloader, validation_dataloader, test_dataloader = get_baseline_dataloader(args.data_file, args.batch_size, tokenizer)
 
 optimizer = AdamW(model.parameters(),lr = args.lr)
 total_steps = len(train_dataloader) * args.epochs
