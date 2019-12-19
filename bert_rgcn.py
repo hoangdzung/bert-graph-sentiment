@@ -13,6 +13,8 @@ from utils import get_acc
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_file', default='data/SST2.pkl')
+parser.add_argument('--hidden_size', type=int, default=512)
+parser.add_argument('--out_size', type=int, default=256)
 parser.add_argument('--epochs', type=int, default=4)
 parser.add_argument('--batch_size', type=int, default=32)
 parser.add_argument('--seed', type=int, default=42)
