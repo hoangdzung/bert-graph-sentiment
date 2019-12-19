@@ -8,6 +8,7 @@ import numpy as np
 import dgl
 import re
 import spacy
+import os 
 
 MAX_LEN = 96
 parser = spacy.load('en_core_web_lg')
@@ -74,13 +75,19 @@ def collate(samples):
     sent_len = [graph.number_of_nodes() for graph in graphs] 
     return batched_graph, torch.tensor(token_ids), torch.tensor(masks), torch.tensor(sent_len), torch.tensor(labels)
 
-def get_split_dataloader(sentences, labels, tokenizer, batch_size):
-    graphs = []
-    token_ids = []
-    for sent in tqdm(sentences, desc='gen graph'):
-        graph, token_id = sent2graph(sent, tokenizer)
-        graphs.append(graph)
-        token_ids.append(token_id)
+def get_split_dataloader(sentences, labels, tokenizer, batch_size, save_file='data/processed/train.pkl'):
+    if os.path.isfile(save_file):
+        print("Load data from ", save_file)
+        graphs, token_ids = pickle.load(opnen(save_file,'wb'))
+    else:
+        graphs = []
+        token_ids = []
+        for sent in tqdm(sentences, desc='gen graph'):
+            graph, token_id = sent2graph(sent, tokenizer)
+            graphs.append(graph)
+            token_ids.append(token_id)
+
+        pickle.dump([graphs, token_ids], open(save_file,'rb'))
 
     token_ids = pad_sequences(token_ids, maxlen=MAX_LEN, dtype="long", 
                                     value=0, truncating="post", padding="post") 
@@ -108,8 +115,8 @@ def get_bert_rgcn_dataloader(datafile, batch_size, tokenizer):
 
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 
-    train_dataloader = get_split_dataloader(train_sentences, train_labels, tokenizer, batch_size)
-    validation_dataloader = get_split_dataloader(dev_sentences, validation_labels, tokenizer, batch_size)
-    test_dataloader = get_split_dataloader(test_sentences, test_labels, tokenizer, batch_size)
+    train_dataloader = get_split_dataloader(train_sentences, train_labels, tokenizer, batch_size, 'data/processed/train.pkl')
+    validation_dataloader = get_split_dataloader(dev_sentences, validation_labels, tokenizer, batch_size, 'data/processed/val.pkl')
+    test_dataloader = get_split_dataloader(test_sentences, test_labels, tokenizer, batch_size, 'data/processed/test.pkl')
 
     return train_dataloader, validation_dataloader, test_dataloader
