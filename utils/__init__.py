@@ -1,1 +1,1 @@
-from evaluation import get_acc
+from .evaluation import get_acc

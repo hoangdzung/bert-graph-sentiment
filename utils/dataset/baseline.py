@@ -30,7 +30,7 @@ def get_split_dataloader(sentences, labels, tokenizer, batch_size):
     sampler = RandomSampler(data)
     dataloader = DataLoader(data, sampler=sampler, batch_size=batch_size)
 
-   return dataloader
+    return dataloader
 
 def get_baseline_dataloader(datafile, batch_size, tokenizer):
     df = pd.read_pickle(datafile)
