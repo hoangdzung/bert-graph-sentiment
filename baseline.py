@@ -9,7 +9,7 @@ import random
 from utils import get_dataloader, get_acc
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_file')
+parser.add_argument('--data_file', default='data/SST2.pkl')
 parser.add_argument('--epochs', type=int, default=4)
 parser.add_argument('--batch_size', type=int, default=32)
 parser.add_argument('--seed', type=int, default=42)
@@ -88,7 +88,7 @@ for epoch_i in range(0, epochs):
     if eval_accuracy > best_eval_acc:
         best_eval_acc = eval_accuracy
         test_accuracy = get_acc(model, test_dataloader, device)
-        
+
 
 print("")
 print("Training complete!")
