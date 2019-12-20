@@ -8,7 +8,7 @@ import argparse
 from tqdm import tqdm 
 import random
 from utils.dataset.baseline import get_baseline_dataloader
-from utils import get_acc
+from utils import get_baseline_acc
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_file', default='data/SST2.pkl')
@@ -81,10 +81,10 @@ for epoch_i in range(0, args.epochs):
     print("")
     print("  Average training loss: {0:.2f}".format(avg_train_loss))
 
-    eval_accuracy = get_acc(model, validation_dataloader, device)
+    eval_accuracy = get_baseline_acc(model, validation_dataloader, device)
     if eval_accuracy > best_eval_acc:
         best_eval_acc = eval_accuracy
-        test_accuracy = get_acc(model, test_dataloader, device)
+        test_accuracy = get_baseline_acc(model, test_dataloader, device)
     print(" Val acc {}, test acc {}".format(eval_accuracy, test_accuracy))
 
 print("")

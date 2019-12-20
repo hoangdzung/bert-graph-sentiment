@@ -14,11 +14,6 @@ import pickle
 MAX_LEN = 96
 parser = spacy.load('en_core_web_lg')
 
-if torch.cuda.is_available():
-    device = torch.device("cuda")
-else:
-    device = torch.device("cpu")
-
 def sent2graph(sent, tokenizer):
     token_sent = tokenizer.tokenize(sent)
     sent = ' '.join([re.sub("[#]","",token)   for token in token_sent ])
@@ -54,8 +49,8 @@ def sent2graph(sent, tokenizer):
             edge_norm.append( 1 / (G.in_degree(e2) - 1 ) )
 
 
-    edge_type = torch.from_numpy(np.array(edge_type)).to(device)
-    edge_norm = torch.from_numpy(np.array(edge_norm)).float().to(device)
+    edge_type = torch.from_numpy(np.array(edge_type))
+    edge_norm = torch.from_numpy(np.array(edge_norm)).float()
 
     G.edata.update({'rel_type': edge_type,})
     G.edata.update({'norm': edge_norm})
