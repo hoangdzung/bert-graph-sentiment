@@ -1,14 +1,22 @@
 import torch
 from transformers import BertForSequenceClassification, AdamW, BertConfig
 from transformers import BertTokenizer, BertModel
-#from transformers import get_linear_schedule_with_warmup
-from transformers import WarmupLinearSchedule as get_linear_schedule_with_warmup
 import numpy as np
 import argparse
 from tqdm import tqdm 
 import random
 from utils.dataset.baseline import get_baseline_dataloader
 from utils import get_baseline_acc
+import transformers
+
+new_version = False
+if transformers.__version__ == '2.2.2':
+    new_version = True
+
+if new_version:
+    from transformers import get_linear_schedule_with_warmup
+else:
+    from transformers import WarmupLinearSchedule as get_linear_schedule_with_warmup
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_file', default='data/SST2.pkl')
@@ -37,10 +45,18 @@ train_dataloader, validation_dataloader, test_dataloader = get_baseline_dataload
 
 optimizer = AdamW(model.parameters(),lr = args.lr)
 total_steps = len(train_dataloader) * args.epochs
-scheduler = get_linear_schedule_with_warmup(optimizer, 
-                                            warmup_steps = 0, # Default value in run_glue.py
-                                            t_total = total_steps)
-
+if new_version:
+    scheduler = get_linear_schedule_with_warmup(optimizer,
+                                            num_warmup_steps = 0,
+                                            #warmup_steps = 0, # Default value in run_glue.py
+                                            num_training_steps = total_steps)
+                                            #t_total = total_steps)
+else:
+    scheduler = get_linear_schedule_with_warmup(optimizer,
+                                        # num_warmup_steps = 0,
+                                        warmup_steps = 0, # Default value in run_glue.py
+                                        # num_training_steps = total_steps)
+                                        t_total = total_steps)
 loss_values = []
 best_eval_acc = 0
 test_acc = 0
