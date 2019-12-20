@@ -94,7 +94,7 @@ class BERT_RGCN(nn.Module):
         out_rgcn = self.RGCN(g)
         combine_out = torch.cat([out_bert, out_rgcn],dim=1)
         final_out = self.head(combine_out)
-        if self.training:
-            return self.criterion(final_out, labels), final_out
-        else:
-            return final_out
+        #if self.training:
+        return self.criterion(final_out, labels), final_out
+        #else:
+        #    return final_out

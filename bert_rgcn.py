@@ -67,7 +67,6 @@ for epoch_i in range(0, args.epochs):
         b_input_lens = batch[3].to(device)
         b_labels = batch[4].to(device)
         outputs = model(b_input_graphs, b_input_ids, b_input_mask, b_input_lens, b_labels)
-
         loss = outputs[0]
         loss.backward()
 
@@ -78,7 +77,6 @@ for epoch_i in range(0, args.epochs):
         optimizer.step()
         scheduler.step()
         model.zero_grad()
-
     # Calculate the average loss over the training data.
     avg_train_loss = total_loss / len(train_dataloader)            
     
