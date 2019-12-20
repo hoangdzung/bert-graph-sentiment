@@ -9,9 +9,15 @@ import dgl
 import re
 import spacy
 import os 
+import pickle
 
 MAX_LEN = 96
 parser = spacy.load('en_core_web_lg')
+
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+else:
+    device = torch.device("cpu")
 
 def sent2graph(sent, tokenizer):
     token_sent = tokenizer.tokenize(sent)
@@ -48,8 +54,8 @@ def sent2graph(sent, tokenizer):
             edge_norm.append( 1 / (G.in_degree(e2) - 1 ) )
 
 
-    edge_type = torch.from_numpy(np.array(edge_type))
-    edge_norm = torch.from_numpy(np.array(edge_norm)).float()
+    edge_type = torch.from_numpy(np.array(edge_type)).to(device)
+    edge_norm = torch.from_numpy(np.array(edge_norm)).float().to(device)
 
     G.edata.update({'rel_type': edge_type,})
     G.edata.update({'norm': edge_norm})
@@ -62,23 +68,23 @@ class GraphDataset(Dataset):
         self.graphs = graphs
         self.token_ids = token_ids  
         self.labels = labels  
-        
+        self.masks = masks  
     def __len__(self):
         return len(self.graphs)
 
     def __getitem__(self, idx):
-        return self.graphs[idx], self.token_ids[idx], self.labels[idx]
+        return self.graphs[idx], self.token_ids[idx], self.masks[idx], self.labels[idx]
 
 def collate(samples):
     graphs, token_ids, masks,labels = map(list, zip(*samples))
     batched_graph = dgl.batch(graphs)
-    sent_len = [graph.number_of_nodes() for graph in graphs] 
+    sent_len = [graph.number_of_nodes() for graph in graphs]
     return batched_graph, torch.tensor(token_ids), torch.tensor(masks), torch.tensor(sent_len), torch.tensor(labels)
 
 def get_split_dataloader(sentences, labels, tokenizer, batch_size, save_file='data/processed/train.pkl'):
     if os.path.isfile(save_file):
         print("Load data from ", save_file)
-        graphs, token_ids = pickle.load(opnen(save_file,'wb'))
+        graphs, token_ids = pickle.load(open(save_file,'rb'))
     else:
         graphs = []
         token_ids = []
@@ -87,7 +93,7 @@ def get_split_dataloader(sentences, labels, tokenizer, batch_size, save_file='da
             graphs.append(graph)
             token_ids.append(token_id)
 
-        pickle.dump([graphs, token_ids], open(save_file,'rb'))
+        pickle.dump([graphs, token_ids], open(save_file,'wb'))
 
     token_ids = pad_sequences(token_ids, maxlen=MAX_LEN, dtype="long", 
                                     value=0, truncating="post", padding="post") 

@@ -35,6 +35,7 @@ else:
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 bert_model = BertModel.from_pretrained("bert-base-uncased", num_labels=2)
 model = BERT_RGCN(args.hidden_size, args.out_size, 2, bert_model)
+model = model.to(device)
 
 train_dataloader, validation_dataloader, test_dataloader = get_bert_rgcn_dataloader(args.data_file, args.batch_size, tokenizer)
 
@@ -56,13 +57,12 @@ for epoch_i in range(0, args.epochs):
     for step, batch in tqdm(enumerate(train_dataloader)):
         model.train()
         
-        b_input_graphs = batch[0].to(device)
+        b_input_graphs = batch[0]
         b_input_ids = batch[1].to(device)
         b_input_mask = batch[2].to(device)
         b_input_lens = batch[3].to(device)
         b_labels = batch[4].to(device)
-                
-        outputs = model(b_input_graphs, b_input_ids, b_input_mask. b_input_lens, b_labels)
+        outputs = model(b_input_graphs, b_input_ids, b_input_mask, b_input_lens, b_labels)
 
         loss = outputs[0]
         loss.backward()
