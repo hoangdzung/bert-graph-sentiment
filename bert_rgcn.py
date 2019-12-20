@@ -1,8 +1,8 @@
 import torch
 from transformers import BertForSequenceClassification, AdamW, BertConfig
 from transformers import BertTokenizer, BertModel
-#from transformers import get_linear_schedule_with_warmup
-from transformers import WarmupLinearSchedule as get_linear_schedule_with_warmup
+from transformers import get_linear_schedule_with_warmup
+#from transformers import WarmupLinearSchedule as get_linear_schedule_with_warmup
 import numpy as np
 import argparse
 from tqdm import tqdm 
@@ -41,9 +41,11 @@ train_dataloader, validation_dataloader, test_dataloader = get_bert_rgcn_dataloa
 
 optimizer = AdamW(model.parameters(),lr = args.lr)
 total_steps = len(train_dataloader) * args.epochs
-scheduler = get_linear_schedule_with_warmup(optimizer, 
-                                            warmup_steps = 0, # Default value in run_glue.py
-                                            t_total = total_steps)
+scheduler = get_linear_schedule_with_warmup(optimizer,
+                                            num_warmup_steps = 0,
+                                            #warmup_steps = 0, # Default value in run_glue.py
+                                            num_training_steps = total_steps)
+                                            #t_total = total_steps)
 
 loss_values = []
 best_eval_acc = 0
@@ -58,6 +60,8 @@ for epoch_i in range(0, args.epochs):
         model.train()
         
         b_input_graphs = batch[0]
+        b_input_graphs.edata['rel_type'] = b_input_graphs.edata['rel_type'].to(device)
+        b_input_graphs.edata['norm'] = b_input_graphs.edata['norm'].to(device)
         b_input_ids = batch[1].to(device)
         b_input_mask = batch[2].to(device)
         b_input_lens = batch[3].to(device)
