@@ -80,6 +80,9 @@ def get_split_dataloader(sentences, labels, tokenizer, batch_size, save_file='da
     if os.path.isfile(save_file):
         print("Load data from ", save_file)
         graphs, token_ids = pickle.load(open(save_file,'rb'))
+        if save_file=='data/processed/train.pkl':
+            graphs = [graphs[i] for i in range(len(graphs)) if i in np.arange(0,70000,5)]
+            token_ids = [token_ids[i] for i in range(len(token_ids)) if i in np.arange(0,70000,5)]
     else:
         graphs = []
         token_ids = []
