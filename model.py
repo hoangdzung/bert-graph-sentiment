@@ -47,7 +47,7 @@ class RGCNLayer(nn.Module):
         return g
 
 class RGCNModel(nn.Module):
-    def __init__(self, in_size, hidden_size, out_size, num_rels, gated = True):
+    def __init__(self, in_size, hidden_size, out_size, num_rels, gated = True, jumping=False):
         super(RGCNModel, self).__init__()
 
         self.in_size = in_size
@@ -55,7 +55,8 @@ class RGCNModel(nn.Module):
         self.out_size = out_size
         self.num_rels = num_rels
         self.gated = gated
-        
+        self.jumping = jumping
+
         # create rgcn layers
         self.build_model()
        
@@ -66,21 +67,29 @@ class RGCNModel(nn.Module):
         
     
     def forward(self, g):
+        g_embeddings =[]
         for layer in self.layers:
             g = layer(g)
-        
-        rst_hidden = []
-        for sub_g in dgl.unbatch(g):
-            rst_hidden.append(  torch.mean(sub_g.ndata['h'], dim=0, keepdim=True)   )
-        return  torch.cat(rst_hidden,dim=0)
+            rst_hidden = []
+            for sub_g in dgl.unbatch(g):
+                rst_hidden.append(  torch.sum(sub_g.ndata['h'], dim=0, keepdim=True)   )
+            g_embeddings.append(torch.cat(rst_hidden,dim=0))
+        if self.jumping:
+            return  torch.cat(g_embeddings,dim=1)
+        else:
+            return g_embeddings[-1]
 
 class BERT_RGCN(nn.Module):
     """The main model."""
-    def __init__(self, hidden_size, out_size, n_classes, bert_model):
+    def __init__(self, hidden_size, out_size, n_classes, bert_model, jumping=False, dropout=0.0):
         super().__init__()
-        self.RGCN =  RGCNModel(in_size=768, hidden_size=hidden_size, out_size=out_size, num_rels = 3, gated = True)
+        self.RGCN =  RGCNModel(in_size=768, hidden_size=hidden_size, out_size=out_size, num_rels = 3, gated = True, jumping=jumping)
         self.BERThead = bert_model # bert output size
-        self.head = nn.Linear(768+out_size,n_classes)
+        if jumping:
+            self.head = nn.Linear(768+hidden_size+out_size,n_classes)
+        else:
+            self.head = nn.Linear(768+out_size,n_classes)
+        self.dropout = nn.Dropout(dropout)
         self.criterion = nn.CrossEntropyLoss()
     
     def forward(self, g, token_ids, masks, sent_len, labels):
@@ -93,7 +102,7 @@ class BERT_RGCN(nn.Module):
         g.ndata['h'] = feats
         out_rgcn = self.RGCN(g)
         combine_out = torch.cat([out_bert, out_rgcn],dim=1)
-        final_out = self.head(combine_out)
+        final_out = self.dropout(self.head(combine_out))
         #if self.training:
         return self.criterion(final_out, labels), final_out
         #else:

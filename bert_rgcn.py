@@ -23,8 +23,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--data_file', default='data/SST2.pkl')
 parser.add_argument('--hidden_size', type=int, default=512)
 parser.add_argument('--out_size', type=int, default=256)
+parser.add_argument('--dropout', type=float, default=0.0)
 parser.add_argument('--epochs', type=int, default=4)
 parser.add_argument('--batch_size', type=int, default=32)
+parser.add_argument('--jumping', action='store_true')
 parser.add_argument('--seed', type=int, default=42)
 parser.add_argument('--lr', type=float, default=2e-5)
 
@@ -42,7 +44,7 @@ else:
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 bert_model = BertModel.from_pretrained("bert-base-uncased", num_labels=2)
-model = BERT_RGCN(args.hidden_size, args.out_size, 2, bert_model)
+model = BERT_RGCN(args.hidden_size, args.out_size, 2, bert_model, jumping=args.jumping, dropout=args.dropout)
 model = model.to(device)
 
 train_dataloader, validation_dataloader, test_dataloader = get_bert_rgcn_dataloader(args.data_file, args.batch_size, tokenizer)
