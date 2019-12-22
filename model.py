@@ -62,9 +62,9 @@ class RGCNModel(nn.Module):
        
     def build_model(self):        
         self.layers = nn.ModuleList() 
-        self.layers.append(RGCNLayer(self.in_size, self.hidden_size, self.num_rels, activation=F.relu, gated = self.gated))
-        self.layers.append(RGCNLayer(self.hidden_size, self.out_size, self.num_rels, activation=F.relu, gated = self.gated))
-        
+        # self.layers.append(RGCNLayer(self.in_size, self.hidden_size, self.num_rels, activation=F.relu, gated = self.gated))
+        # self.layers.append(RGCNLayer(self.hidden_size, self.out_size, self.num_rels, activation=F.relu, gated = self.gated))
+        self.layers.append(RGCNLayer(self.in_size, self.out_size, self.num_rels, activation=F.relu, gated = self.gated))
     
     def forward(self, g):
         g_embeddings =[]
@@ -83,24 +83,30 @@ class BERT_RGCN(nn.Module):
     """The main model."""
     def __init__(self, hidden_size, out_size, n_classes, bert_model, jumping=False, dropout=0.0):
         super().__init__()
-        self.RGCN =  RGCNModel(in_size=768, hidden_size=hidden_size, out_size=out_size, num_rels = 3, gated = True, jumping=jumping)
-        self.BERThead = bert_model # bert output size
-        if jumping:
-            self.head = nn.Linear(768+hidden_size+out_size,n_classes)
-        else:
-            self.head = nn.Linear(768+out_size,n_classes)
+        self.rgcn_model =  RGCNModel(in_size=768, hidden_size=hidden_size, out_size=out_size, num_rels = 3, gated = True, jumping=jumping)
+        self.bert_model = bert_model # bert output size
+        self.bert_head = nn.Linear(768,out_size)
+        self.bert_dropout = nn.Dropout(dropout)
+        # if jumping:
+            # self.head = nn.Linear(768+hidden_size+out_size,n_classes)
+        # else:
+        self.head = nn.Linear(out_size+out_size,n_classes)
         self.dropout = nn.Dropout(dropout)
         self.criterion = nn.CrossEntropyLoss()
     
     def forward(self, g, token_ids, masks, sent_len, labels):
-        features_g, out_bert = self.BERThead(token_ids, attention_mask=masks)
+        features_g, out_bert = self.bert_model(token_ids, attention_mask=masks)
+        out_bert = self.bert_dropout(self.bert_head(out_bert)) # vector 256
+
         feats = []
         for i in range(token_ids.shape[0]):
             feats.append(features_g[i][1:1+sent_len[i]])
 
         feats = torch.cat(feats,dim=0)
         g.ndata['h'] = feats
-        out_rgcn = self.RGCN(g)
+
+        out_rgcn = self.rgcn_dropout(self.rgcn_model(g)) # vector 256
+
         combine_out = torch.cat([out_bert, out_rgcn],dim=1)
         final_out = self.dropout(self.head(combine_out))
         #if self.training:
