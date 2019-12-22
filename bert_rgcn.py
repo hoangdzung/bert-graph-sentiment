@@ -89,7 +89,7 @@ for epoch_i in range(0, args.epochs):
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
 
         optimizer.step()
-        #scheduler.step()
+        scheduler.step()
         model.zero_grad()
     # Calculate the average loss over the training data.
     avg_train_loss = total_loss / len(train_dataloader)            
