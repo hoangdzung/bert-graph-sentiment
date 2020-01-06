@@ -5,7 +5,7 @@ import numpy as np
 import argparse
 from tqdm import tqdm 
 import random
-from model import BERT_RGCN
+from model import BERT_RGCN, RGCN
 from utils.dataset.bert_rgcn import get_bert_rgcn_dataloader
 from utils import get_bert_rgcn_acc
 import transformers
@@ -27,6 +27,7 @@ parser.add_argument('--dropout', type=float, default=0.0)
 parser.add_argument('--epochs', type=int, default=4)
 parser.add_argument('--batch_size', type=int, default=32)
 parser.add_argument('--jumping', action='store_true')
+parser.add_argument('--combine', action='store_true')
 parser.add_argument('--seed', type=int, default=42)
 parser.add_argument('--lr', type=float, default=2e-5)
 
