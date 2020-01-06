@@ -46,30 +46,43 @@ else:
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 bert_model = BertModel.from_pretrained("bert-base-uncased", num_labels=2)
-model = BERT_RGCN(args.hidden_size, args.out_size, 2, bert_model, jumping=args.jumping, dropout=args.dropout)
+if args.combine:
+    model_class = BERT_RGCN
+else:
+    model_class = RGCN
+model = model_class(args.hidden_size, args.out_size, 2, bert_model, jumping=args.jumping, dropout=args.dropout)
 model = model.to(device)
 
 train_dataloader, validation_dataloader, test_dataloader = get_bert_rgcn_dataloader(args.data_file, args.batch_size, tokenizer)
 
-optimizer = AdamW(model.parameters(),lr = args.lr)
-total_steps = len(train_dataloader) * args.epochs
-optimizer2 = AdamW([
-        {'params': model.rgcn_model.parameters()},
-        #{'params': model.bert_head.parameters()},
-        {'params': model.head.parameters()}
-    ],lr = args.lr2)
-if new_version:
-    scheduler = get_linear_schedule_with_warmup(optimizer,
-                                            num_warmup_steps = 0,
-                                            #warmup_steps = 0, # Default value in run_glue.py
-                                            num_training_steps = total_steps)
-                                            #t_total = total_steps)
+if args.combine:
+    optimizer = AdamW(model.bert_head.parameters(),lr = args.lr)
+    optimizer2 = AdamW([
+            {'params': model.rgcn_model.parameters()},
+            {'params': model.head.parameters()}
+        ],lr = args.lr2)
+
+    total_steps = len(train_dataloader) * args.epochs
+
+    if new_version:
+        scheduler = get_linear_schedule_with_warmup(optimizer,
+                                                num_warmup_steps = int(0.1 * total_steps),
+                                                #warmup_steps = 0, # Default value in run_glue.py
+                                                num_training_steps = total_steps)
+                                                #t_total = total_steps)
+    else:
+        scheduler = get_linear_schedule_with_warmup(optimizer,
+                                            # num_warmup_steps = 0,
+                                            warmup_steps = int(0.1 * total_steps), # Default value in run_glue.py
+                                            # num_training_steps = total_steps)
+                                            t_total = total_steps)
+
 else:
-    scheduler = get_linear_schedule_with_warmup(optimizer,
-                                        # num_warmup_steps = 0,
-                                        warmup_steps = 0, # Default value in run_glue.py
-                                        # num_training_steps = total_steps)
-                                        t_total = total_steps)
+    optimizer = AdamW([
+            {'params': model.rgcn_model.parameters()},
+            {'params': model.head.parameters()}
+        ],lr = args.lr)
+
 loss_values = []
 best_eval_acc = 0
 test_acc = 0
@@ -96,10 +109,11 @@ for epoch_i in range(0, args.epochs):
         total_loss += loss.item()
 
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-
         optimizer.step()
-        optimizer2.step()
-        scheduler.step()
+        if args.combine:
+            optimizer2.step()
+            scheduler.step()
+
         model.zero_grad()
     # Calculate the average loss over the training data.
     avg_train_loss = total_loss / len(train_dataloader)            
