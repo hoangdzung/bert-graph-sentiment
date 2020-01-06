@@ -47,14 +47,14 @@ optimizer = AdamW(model.parameters(),lr = args.lr)
 total_steps = len(train_dataloader) * args.epochs
 if new_version:
     scheduler = get_linear_schedule_with_warmup(optimizer,
-                                            num_warmup_steps = 0,
+                                            num_warmup_steps = int(0.1*total_steps),
                                             #warmup_steps = 0, # Default value in run_glue.py
                                             num_training_steps = total_steps)
                                             #t_total = total_steps)
 else:
     scheduler = get_linear_schedule_with_warmup(optimizer,
                                         # num_warmup_steps = 0,
-                                        warmup_steps = 0, # Default value in run_glue.py
+                                        warmup_steps = int(0.1*total_steps), # Default value in run_glue.py
                                         # num_training_steps = total_steps)
                                         t_total = total_steps)
 loss_values = []

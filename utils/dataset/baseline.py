@@ -37,11 +37,11 @@ def get_baseline_dataloader(datafile, batch_size, tokenizer):
     df = pd.read_pickle(datafile)
     print('Number of training sentences: {:,}\n'.format(df.shape[0]))
 
-    train_sentences = df[df['split']=='train'].sentence.values[np.arange(0,70000,5)]
+    train_sentences = df[df['split']=='train'].sentence.values#[np.arange(0,70000,5)]
     dev_sentences = df[df['split']=='dev'].sentence.values
     test_sentences = df[df['split']=='test'].sentence.values
 
-    train_labels = df[df['split']=='train'].label.values.astype(int)[np.arange(0,70000,5)]
+    train_labels = df[df['split']=='train'].label.values.astype(int)#[np.arange(0,70000,5)]
     validation_labels = df[df['split']=='dev'].label.values.astype(int)
     test_labels = df[df['split']=='test'].label.values.astype(int)
 
