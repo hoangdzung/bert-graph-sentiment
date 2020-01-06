@@ -80,9 +80,9 @@ def get_split_dataloader(sentences, labels, tokenizer, batch_size, save_file='da
     if os.path.isfile(save_file):
         print("Load data from ", save_file)
         graphs, token_ids = pickle.load(open(save_file,'rb'))
-        if save_file=='data/processed/train.pkl':
-            graphs = [graphs[i] for i in range(len(graphs)) if i in np.arange(0,70000,5)]
-            token_ids = [token_ids[i] for i in range(len(token_ids)) if i in np.arange(0,70000,5)]
+        #if save_file=='data/processed/train.pkl':
+        #    graphs = [graphs[i] for i in range(len(graphs)) if i in np.arange(0,70000,5)]
+        #    token_ids = [token_ids[i] for i in range(len(token_ids)) if i in np.arange(0,70000,5)]
     else:
         graphs = []
         token_ids = []
@@ -109,11 +109,11 @@ def get_bert_rgcn_dataloader(datafile, batch_size, tokenizer):
     df = pd.read_pickle(datafile)
     print('Number of training sentences: {:,}\n'.format(df.shape[0]))
 
-    train_sentences = df[df['split']=='train'].sentence.values[np.arange(0,70000,5)]
+    train_sentences = df[df['split']=='train'].sentence.values#[np.arange(0,70000,5)]
     dev_sentences = df[df['split']=='dev'].sentence.values
     test_sentences = df[df['split']=='test'].sentence.values
 
-    train_labels = df[df['split']=='train'].label.values.astype(int)[np.arange(0,70000,5)]
+    train_labels = df[df['split']=='train'].label.values.astype(int)#[np.arange(0,70000,5)]
     validation_labels = df[df['split']=='dev'].label.values.astype(int)
     test_labels = df[df['split']=='test'].label.values.astype(int)
 

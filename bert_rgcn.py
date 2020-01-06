@@ -29,6 +29,7 @@ parser.add_argument('--batch_size', type=int, default=32)
 parser.add_argument('--jumping', action='store_true')
 parser.add_argument('--seed', type=int, default=42)
 parser.add_argument('--lr', type=float, default=2e-5)
+parser.add_argument('--lr2', type=float, default=1e-2)
 
 args = parser.parse_args()
 
@@ -51,6 +52,11 @@ train_dataloader, validation_dataloader, test_dataloader = get_bert_rgcn_dataloa
 
 optimizer = AdamW(model.parameters(),lr = args.lr)
 total_steps = len(train_dataloader) * args.epochs
+optimizer2 = AdamW([
+        {'params': model.rgcn_model.parameters()},
+        #{'params': model.bert_head.parameters()},
+        {'params': model.head.parameters()}
+    ],lr = args.lr2)
 if new_version:
     scheduler = get_linear_schedule_with_warmup(optimizer,
                                             num_warmup_steps = 0,
@@ -91,6 +97,7 @@ for epoch_i in range(0, args.epochs):
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
 
         optimizer.step()
+        optimizer2.step()
         scheduler.step()
         model.zero_grad()
     # Calculate the average loss over the training data.
