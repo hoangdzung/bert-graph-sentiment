@@ -1,6 +1,5 @@
 import torch
-from transformers import BertForSequenceClassification, AdamW, BertConfig
-from transformers import BertTokenizer, BertModel
+from transformers import *
 import numpy as np
 import argparse
 from tqdm import tqdm 
@@ -8,6 +7,7 @@ import random
 from utils.dataset.baseline import get_baseline_dataloader
 from utils import get_baseline_acc
 import transformers
+from model import BERT
 
 new_version = False
 if transformers.__version__ == '2.2.2':
@@ -37,8 +37,12 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
-model = BertForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=2)
+# tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
+# model = BertForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=2)
+tokenizer = AlbertTokenizer.from_pretrained('albert-base-v1', do_lower_case=True)
+bert_model = AlbertModel.from_pretrained("albert-base-v1")
+
+model = BERT(2, bert_model)
 model = model.to(device)
 
 train_dataloader, validation_dataloader, test_dataloader = get_baseline_dataloader(args.data_file, args.batch_size, tokenizer)

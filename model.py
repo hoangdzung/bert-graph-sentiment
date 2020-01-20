@@ -108,12 +108,26 @@ class BERT_RGCN(nn.Module):
         out_rgcn = self.rgcn_model(g) # vector 256
 
         combine_out = torch.cat([out_bert, out_rgcn],dim=1)
-        final_out = self.dropout(self.head(combine_out))
+        final_out = self.head(self.dropout(combine_out))
         #if self.training:
         return self.criterion(final_out, labels), final_out
         #else:
         #    return final_out
 
+class BERT(nn.Module):
+    """The main model."""
+    def __init__(self, n_classes, bert_model,dropout=0.0):
+        super().__init__()
+        self.bert_model = bert_model # bert output size
+        self.head = nn.Linear(768,n_classes)
+        self.dropout = nn.Dropout(dropout)
+        self.criterion = nn.CrossEntropyLoss()
+    
+    def forward(self, g, token_ids, masks, sent_len, labels):
+        features_g, out_bert = self.bert_model(token_ids, attention_mask=masks)
+        out = self.head(self.dropout(out_bert))
+        final_out = self.dropout(self.head(combine_out))
+        return self.criterion(out, labels), out
 
 class RGCN(nn.Module):
     """The main model."""
@@ -137,5 +151,5 @@ class RGCN(nn.Module):
 
         out_rgcn = self.rgcn_dropout(self.rgcn_model(g)) # vector 256
 
-        final_out = self.dropout(self.head(out_rgcn))
+        final_out = self.head(self.dropout(out_rgcn))
         return self.criterion(final_out, labels), final_out

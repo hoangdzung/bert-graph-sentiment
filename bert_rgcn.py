@@ -1,6 +1,5 @@
 import torch
-from transformers import BertForSequenceClassification, AdamW, BertConfig
-from transformers import BertTokenizer, BertModel
+from transformers import *
 import numpy as np
 import argparse
 from tqdm import tqdm 
@@ -44,8 +43,11 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
-bert_model = BertModel.from_pretrained("bert-base-uncased", num_labels=2)
+# tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
+# model = BertForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=2)
+tokenizer = AlbertTokenizer.from_pretrained('albert-base-v1', do_lower_case=True)
+model = AlbertModel.from_pretrained("albert-base-v1")
+
 if args.combine:
     model_class = BERT_RGCN
 else:
