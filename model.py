@@ -72,7 +72,7 @@ class RGCNModel(nn.Module):
             g = layer(g)
             rst_hidden = []
             for sub_g in dgl.unbatch(g):
-                rst_hidden.append(  torch.sum(sub_g.ndata['h'], dim=0, keepdim=True)   )
+                rst_hidden.append(  torch.mean(sub_g.ndata['h'], dim=0, keepdim=True)   )
             g_embeddings.append(torch.cat(rst_hidden,dim=0))
         if self.jumping:
             return  torch.cat(g_embeddings,dim=1)
@@ -135,7 +135,7 @@ class RGCN(nn.Module):
         feats = torch.cat(feats,dim=0)
         g.ndata['h'] = feats
 
-        out_rgcn = self.rgcn_dropout(self.rgcn_model(g)) # vector 256
+        out_rgcn = self.dropout(self.rgcn_model(g)) # vector 256
 
         final_out = self.dropout(self.head(out_rgcn))
         return self.criterion(final_out, labels), final_out
