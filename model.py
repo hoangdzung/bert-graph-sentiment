@@ -27,11 +27,13 @@ class RGCNLayer(nn.Module):
         gate_weight = self.gate_weight
         
         def message_func(edges):
-            w = weight[edges.data['rel_type']]
+            # w = weight[edges.data['rel_type']]
+            w = weight[0]
             msg = torch.bmm(edges.src['h'].unsqueeze(1), w).squeeze()
             msg = msg * edges.data['norm'].unsqueeze(-1)
             if self.gated:
-                gate_w = gate_weight[edges.data['rel_type']]
+                # gate_w = gate_weight[edges.data['rel_type']]
+                gate_w = gate_weight[0]
                 gate = torch.bmm(edges.src['h'].unsqueeze(1), gate_w).squeeze().reshape(-1,1)
                 gate = torch.sigmoid(gate)
                 msg = msg * gate
@@ -72,7 +74,7 @@ class RGCNModel(nn.Module):
             g = layer(g)
             rst_hidden = []
             for sub_g in dgl.unbatch(g):
-                rst_hidden.append(  torch.sum(sub_g.ndata['h'], dim=0, keepdim=True)   )
+                rst_hidden.append(  torch.mean(sub_g.ndata['h'], dim=0, keepdim=True)   )
             g_embeddings.append(torch.cat(rst_hidden,dim=0))
         if self.jumping:
             return  torch.cat(g_embeddings,dim=1)
@@ -149,7 +151,7 @@ class RGCN(nn.Module):
         feats = torch.cat(feats,dim=0)
         g.ndata['h'] = feats
 
-        out_rgcn = self.rgcn_dropout(self.rgcn_model(g)) # vector 256
+        out_rgcn = self.dropout(self.rgcn_model(g)) # vector 256
 
         final_out = self.head(self.dropout(out_rgcn))
         return self.criterion(final_out, labels), final_out

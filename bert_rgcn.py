@@ -58,7 +58,7 @@ model = model.to(device)
 train_dataloader, validation_dataloader, test_dataloader = get_bert_rgcn_dataloader(args.data_file, args.batch_size, tokenizer)
 
 if args.combine:
-    optimizer = AdamW(model.bert_head.parameters(),lr = args.lr)
+    optimizer = AdamW(model.bert_model.parameters(),lr = args.lr)
     optimizer2 = AdamW([
             {'params': model.rgcn_model.parameters()},
             {'params': model.head.parameters()}
