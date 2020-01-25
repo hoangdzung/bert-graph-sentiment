@@ -128,7 +128,6 @@ class BERT(nn.Module):
     def forward(self, token_ids, masks, labels):
         features_g, out_bert = self.bert_model(token_ids, attention_mask=masks)
         out = self.head(self.dropout(out_bert))
-        final_out = self.dropout(self.head(combine_out))
         return self.criterion(out, labels), out
 
 class RGCN(nn.Module):
