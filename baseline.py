@@ -37,10 +37,10 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
-# tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
-# model = BertForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=2)
-tokenizer = AlbertTokenizer.from_pretrained('albert-base-v1', do_lower_case=True)
-bert_model = AlbertModel.from_pretrained("albert-base-v1")
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
+bert_model = BertModel.from_pretrained("bert-base-uncased")
+# tokenizer = AlbertTokenizer.from_pretrained('albert-base-v1', do_lower_case=True)
+# bert_model = AlbertModel.from_pretrained("albert-base-v1")
 
 model = BERT(2, bert_model)
 model = model.to(device)
@@ -77,10 +77,7 @@ for epoch_i in range(0, args.epochs):
         b_input_mask = batch[1].to(device)
         b_labels = batch[2].to(device)
                 
-        outputs = model(b_input_ids, 
-                    token_type_ids=None, 
-                    attention_mask=b_input_mask, 
-                    labels=b_labels)
+        outputs = model(b_input_ids, b_input_mask, b_labels)
         
         loss = outputs[0]
         loss.backward()

@@ -19,9 +19,9 @@ def get_baseline_acc(model, validation_dataloader, device):
         b_input_ids, b_input_mask, b_labels = batch
         
         with torch.no_grad():        
-            outputs = model(b_input_ids, token_type_ids=None, attention_mask=b_input_mask)
+            outputs = model(b_input_ids, b_input_mask, b_labels)
         
-        logits = outputs[0]
+        logits = outputs[1]
 
         logits = logits.detach().cpu().numpy()
         label_ids = b_labels.to('cpu').numpy()

@@ -125,7 +125,7 @@ class BERT(nn.Module):
         self.dropout = nn.Dropout(dropout)
         self.criterion = nn.CrossEntropyLoss()
     
-    def forward(self, g, token_ids, masks, sent_len, labels):
+    def forward(self, token_ids, masks, labels):
         features_g, out_bert = self.bert_model(token_ids, attention_mask=masks)
         out = self.head(self.dropout(out_bert))
         final_out = self.dropout(self.head(combine_out))
