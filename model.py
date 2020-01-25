@@ -27,13 +27,13 @@ class RGCNLayer(nn.Module):
         gate_weight = self.gate_weight
         
         def message_func(edges):
-            # w = weight[edges.data['rel_type']]
-            w = weight[0]
+            w = weight[edges.data['rel_type']]
+            # w = weight[0]
             msg = torch.bmm(edges.src['h'].unsqueeze(1), w).squeeze()
             msg = msg * edges.data['norm'].unsqueeze(-1)
             if self.gated:
-                # gate_w = gate_weight[edges.data['rel_type']]
-                gate_w = gate_weight[0]
+                gate_w = gate_weight[edges.data['rel_type']]
+                # gate_w = gate_weight[0]
                 gate = torch.bmm(edges.src['h'].unsqueeze(1), gate_w).squeeze().reshape(-1,1)
                 gate = torch.sigmoid(gate)
                 msg = msg * gate
