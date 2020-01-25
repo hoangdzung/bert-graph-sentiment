@@ -44,7 +44,7 @@ else:
     device = torch.device("cpu")
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
-bert_model = BertForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=2)
+bert_model = BertModel.from_pretrained("bert-base-uncased")
 # tokenizer = AlbertTokenizer.from_pretrained('albert-base-v1', do_lower_case=True)
 # bert_model = AlbertModel.from_pretrained("albert-base-v1")
 
