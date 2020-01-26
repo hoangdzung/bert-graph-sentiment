@@ -25,18 +25,18 @@ def sent2graph(sent, tokenizer):
     for i_word, word in enumerate(parse_rst['tokens']):
         if i_word not in node2id:
             node2id[i_word] = len(node2id) 
-            edges.append( [i_word, i_word] )
-            edge_type.append(0)
+            # edges.append( [i_word, i_word] )
+            # edge_type.append(0)
         if word['head'] not in node2id:
             node2id[word['head']] = len(node2id) 
-            edges.append( [word['head'], word['head']] )
-            edge_type.append(0)
+            # edges.append( [word['head'], word['head']] )
+            # edge_type.append(0)
 
         if word['dep'] != 'ROOT':
-            edges.append( [node2id[word['head']], node2id[word['id']]] )
-            edge_type.append(1)
+            # edges.append( [node2id[word['head']], node2id[word['id']]] )
+            # edge_type.append(0)
             edges.append( [node2id[word['id']], node2id[word['head']]] )
-            edge_type.append(2)
+            # edge_type.append(0)
             
     G = dgl.DGLGraph()
     G.add_nodes(len(node2id))
@@ -49,10 +49,10 @@ def sent2graph(sent, tokenizer):
             edge_norm.append( 1 / (G.in_degree(e2) - 1 ) )
 
 
-    edge_type = torch.from_numpy(np.array(edge_type))
+    # edge_type = torch.from_numpy(np.array(edge_type))
     edge_norm = torch.from_numpy(np.array(edge_norm)).float()
 
-    G.edata.update({'rel_type': edge_type,})
+    # G.edata.update({'rel_type': edge_type,})
     G.edata.update({'norm': edge_norm})
     
     return G, [101]+tokenizer.convert_tokens_to_ids(token_sent)+[102]

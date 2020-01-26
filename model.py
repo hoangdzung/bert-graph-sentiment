@@ -5,20 +5,21 @@ import dgl
 import dgl.function as fn
 
 class RGCNLayer(nn.Module):
-    def __init__(self, feat_size, out_size, num_rels, activation=None, gated = True):
+    def __init__(self, feat_size, out_size, activation=None, gated = True):
         
         super(RGCNLayer, self).__init__()
         self.feat_size = feat_size
-        self.num_rels = num_rels
         self.activation = activation
         self.gated = gated
 
-        self.weight = nn.Parameter(torch.Tensor(self.num_rels, self.feat_size, out_size))
+        # self.weight = nn.Parameter(torch.Tensor(self.num_rels, self.feat_size, out_size))
+        self.weight = nn.Parameter(torch.Tensor(self.feat_size, out_size))
         # init trainable parameters
         nn.init.xavier_uniform_(self.weight,gain=nn.init.calculate_gain('relu'))
         
         if self.gated:
-            self.gate_weight = nn.Parameter(torch.Tensor(self.num_rels, self.feat_size, 1))
+            # self.gate_weight = nn.Parameter(torch.Tensor(self.num_rels, self.feat_size, 1))
+            self.gate_weight = nn.Parameter(torch.Tensor(self.feat_size, 1))
             nn.init.xavier_uniform_(self.gate_weight,gain=nn.init.calculate_gain('sigmoid'))
         
     def forward(self, g):
@@ -27,13 +28,15 @@ class RGCNLayer(nn.Module):
         gate_weight = self.gate_weight
         
         def message_func(edges):
-            w = weight[edges.data['rel_type']]
+            # w = weight[edges.data['rel_type']]
             # w = weight[0]
+            w = weight
             msg = torch.bmm(edges.src['h'].unsqueeze(1), w).squeeze()
             msg = msg * edges.data['norm'].unsqueeze(-1)
             if self.gated:
-                gate_w = gate_weight[edges.data['rel_type']]
+                # gate_w = gate_weight[edges.data['rel_type']]
                 # gate_w = gate_weight[0]
+                gate_w = gate_weight
                 gate = torch.bmm(edges.src['h'].unsqueeze(1), gate_w).squeeze().reshape(-1,1)
                 gate = torch.sigmoid(gate)
                 msg = msg * gate
