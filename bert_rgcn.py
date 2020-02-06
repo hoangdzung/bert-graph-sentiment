@@ -10,7 +10,7 @@ from utils import get_bert_rgcn_acc
 import transformers
 
 new_version = False
-if transformers.__version__ == '2.2.2':
+if transformers.__version__ >= '2.2.2':
     new_version = True
 
 if new_version:
@@ -54,6 +54,7 @@ else:
     model_class = RGCN
 model = model_class(args.hidden_size, args.out_size, 2, bert_model, jumping=args.jumping, dropout=args.dropout)
 model = model.to(device)
+model.bert_model.load_state_dict(torch.load('baseline.pt'))
 
 train_dataloader, validation_dataloader, test_dataloader = get_bert_rgcn_dataloader(args.data_file, args.batch_size, tokenizer)
 
@@ -133,3 +134,5 @@ for epoch_i in range(0, args.epochs):
 
 print("")
 print("Training complete!")
+
+torch.save(model.state_dict(), 'bert_rgcn.pt')

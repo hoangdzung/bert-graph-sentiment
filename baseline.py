@@ -10,7 +10,7 @@ import transformers
 from model import BERT
 
 new_version = False
-if transformers.__version__ == '2.2.2':
+if transformers.__version__ >= '2.2.2':
     new_version = True
 
 if new_version:
@@ -106,3 +106,5 @@ for epoch_i in range(0, args.epochs):
 
 print("")
 print("Training complete!")
+
+torch.save(model.bert_model.state_dict(), 'baseline.pt')
