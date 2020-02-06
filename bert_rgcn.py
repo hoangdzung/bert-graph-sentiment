@@ -26,6 +26,7 @@ parser.add_argument('--dropout', type=float, default=0.0)
 parser.add_argument('--epochs', type=int, default=4)
 parser.add_argument('--batch_size', type=int, default=32)
 parser.add_argument('--jumping', action='store_true')
+parser.add_argument('--co_occur', action='store_true')
 parser.add_argument('--combine', action='store_true')
 parser.add_argument('--seed', type=int, default=42)
 parser.add_argument('--lr', type=float, default=2e-5)
@@ -56,7 +57,7 @@ model = model_class(args.hidden_size, args.out_size, 2, bert_model, jumping=args
 model = model.to(device)
 model.bert_model.load_state_dict(torch.load('baseline.pt'))
 
-train_dataloader, validation_dataloader, test_dataloader = get_bert_rgcn_dataloader(args.data_file, args.batch_size, tokenizer)
+train_dataloader, validation_dataloader, test_dataloader = get_bert_rgcn_dataloader(args.data_file, args.batch_size, tokenizer, args.co_occur)
 
 if args.combine:
     optimizer = AdamW(model.bert_model.parameters(),lr = args.lr)

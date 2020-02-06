@@ -14,29 +14,47 @@ import pickle
 MAX_LEN = 96
 parser = spacy.load('en_core_web_lg')
 
-def sent2graph(sent, tokenizer):
+def sent2graph(sent, tokenizer, co_occur=False):
     token_sent = tokenizer.tokenize(sent)
-    sent = ' '.join([re.sub("[#]","",token)   for token in token_sent ])
-    doc = parser(sent)
-    parse_rst = doc.to_json()
-    node2id = dict()
-    edges = []
-    edge_type = []
-    for i_word, word in enumerate(parse_rst['tokens']):
-        if i_word not in node2id:
-            node2id[i_word] = len(node2id) 
-            # edges.append( [i_word, i_word] )
-            # edge_type.append(0)
-        if word['head'] not in node2id:
-            node2id[word['head']] = len(node2id) 
-            # edges.append( [word['head'], word['head']] )
-            # edge_type.append(0)
+    if co_occur:
+        node2id = dict()
+        for i_word, word in enumerate(token_sent):
+            if i_word not in node2id:
+                node2id[i_word] = len(node2id)
+                edges.append( [i_word, i_word] )
+                edge_type.append(0)
+            for i_head in [max(0, i_word-2):i_word] + [min(i_word+3, len(token_sent))]:
+                if i_head not in node2id:
+                    node2id[i_head] = len(node2id) 
+                    edges.append( [i_head, i_head] )
+                    edge_type.append(0)
+                edges.append( [i_head, i_word] )
+                edge_type.append(1)
+                edges.append( [i_word, i_head] )
+                edge_type.append(2)    
 
-        if word['dep'] != 'ROOT':
-            # edges.append( [node2id[word['head']], node2id[word['id']]] )
-            # edge_type.append(0)
-            edges.append( [node2id[word['id']], node2id[word['head']]] )
-            # edge_type.append(0)
+    else:
+        sent = ' '.join([re.sub("[#]","",token)   for token in token_sent ])
+        doc = parser(sent)
+        parse_rst = doc.to_json()
+        node2id = dict()
+        edges = []
+        edge_type = []
+        for i_word, word in enumerate(parse_rst['tokens']):
+            if i_word not in node2id:
+                node2id[i_word] = len(node2id) 
+                edges.append( [i_word, i_word] )
+                edge_type.append(0)
+            if word['head'] not in node2id:
+                node2id[word['head']] = len(node2id) 
+                edges.append( [word['head'], word['head']] )
+                edge_type.append(0)
+
+            if word['dep'] != 'ROOT':
+                edges.append( [word['head'], word['id']] )
+                edge_type.append(1)
+                edges.append( [word['id'], word['head']] )
+                edge_type.append(2)
             
     G = dgl.DGLGraph()
     G.add_nodes(len(node2id))
@@ -76,7 +94,7 @@ def collate(samples):
     sent_len = [graph.number_of_nodes() for graph in graphs]
     return batched_graph, torch.tensor(token_ids), torch.tensor(masks), torch.tensor(sent_len), torch.tensor(labels)
 
-def get_split_dataloader(sentences, labels, tokenizer, batch_size, save_file='data/processed/train.pkl'):
+def get_split_dataloader(sentences, labels, tokenizer, batch_size, save_file='data/processed/train.pkl', co_occur= False):
     if os.path.isfile(save_file):
         print("Load data from ", save_file)
         graphs, token_ids = pickle.load(open(save_file,'rb'))
@@ -87,7 +105,7 @@ def get_split_dataloader(sentences, labels, tokenizer, batch_size, save_file='da
         graphs = []
         token_ids = []
         for sent in tqdm(sentences, desc='gen graph'):
-            graph, token_id = sent2graph(sent, tokenizer)
+            graph, token_id = sent2graph(sent, tokenizer, co_occur)
             graphs.append(graph)
             token_ids.append(token_id)
 
@@ -105,7 +123,7 @@ def get_split_dataloader(sentences, labels, tokenizer, batch_size, save_file='da
 
     return dataloader
 
-def get_bert_rgcn_dataloader(datafile, batch_size, tokenizer):
+def get_bert_rgcn_dataloader(datafile, batch_size, tokenizer, co_occur=False):
     df = pd.read_pickle(datafile)
     print('Number of training sentences: {:,}\n'.format(df.shape[0]))
 
@@ -119,8 +137,8 @@ def get_bert_rgcn_dataloader(datafile, batch_size, tokenizer):
 
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 
-    train_dataloader = get_split_dataloader(train_sentences, train_labels, tokenizer, batch_size, 'data/processed/train.pkl')
-    validation_dataloader = get_split_dataloader(dev_sentences, validation_labels, tokenizer, batch_size, 'data/processed/val.pkl')
-    test_dataloader = get_split_dataloader(test_sentences, test_labels, tokenizer, batch_size, 'data/processed/test.pkl')
+    train_dataloader = get_split_dataloader(train_sentences, train_labels, tokenizer, batch_size, 'data/processed/train.pkl', co_occur)
+    validation_dataloader = get_split_dataloader(dev_sentences, validation_labels, tokenizer, batch_size, 'data/processed/val.pkl', co_occur)
+    test_dataloader = get_split_dataloader(test_sentences, test_labels, tokenizer, batch_size, 'data/processed/test.pkl', co_occur)
 
     return train_dataloader, validation_dataloader, test_dataloader

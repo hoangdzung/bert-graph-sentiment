@@ -134,6 +134,24 @@ class BERT(nn.Module):
         out = self.head(self.dropout(out_bert))
         return self.criterion(out, labels), out
 
+class BERTAttention(nn.Module):
+    """The main model."""
+    def __init__(self, n_classes, bert_model,dropout=0.0):
+        super().__init__()
+        self.bert_model = bert_model # bert output size
+        self.head = nn.Linear(768,n_classes)
+        self.atten = nn.Linear(768*2,1)
+        self.dropout = nn.Dropout(dropout)
+        self.criterion = nn.CrossEntropyLoss()
+    
+    def forward(self, token_ids, masks, labels):
+        features_g, out_bert = self.bert_model(token_ids, attention_mask=masks)
+        cat_features_g = torch.cat((torch.unsqueeze(out_bert,1).expand_as(features_g),features_g),dim=-1)
+        attentions_g = F.softmax(self.atten(cat_features_g),dim=-1)
+        out = (features_g*features_g).sum(1)
+        out = self.head(self.dropout(out))
+        return self.criterion(out, labels), out
+
 class RGCN(nn.Module):
     """The main model."""
     def __init__(self, hidden_size, out_size, n_classes, bert_model, jumping=False, dropout=0.0):

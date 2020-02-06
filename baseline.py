@@ -7,7 +7,7 @@ import random
 from utils.dataset.baseline import get_baseline_dataloader
 from utils import get_baseline_acc
 import transformers
-from model import BERT
+from model import BERT, BERTAttention
 
 new_version = False
 if transformers.__version__ >= '2.2.2':
@@ -24,6 +24,8 @@ parser.add_argument('--epochs', type=int, default=4)
 parser.add_argument('--batch_size', type=int, default=32)
 parser.add_argument('--seed', type=int, default=42)
 parser.add_argument('--lr', type=float, default=2e-5)
+parser.add_argument('--attention', action='store_true')
+parser.add_argument('--save')
 
 args = parser.parse_args()
 
@@ -42,7 +44,10 @@ bert_model = BertModel.from_pretrained("bert-base-uncased")
 # tokenizer = AlbertTokenizer.from_pretrained('albert-base-v1', do_lower_case=True)
 # bert_model = AlbertModel.from_pretrained("albert-base-v1")
 
-model = BERT(2, bert_model)
+if args.attention:
+    model = BERTAttention(2, bert_model)
+else:
+    model = BERT(2, bert_model)
 model = model.to(device)
 
 train_dataloader, validation_dataloader, test_dataloader = get_baseline_dataloader(args.data_file, args.batch_size, tokenizer)
@@ -107,4 +112,4 @@ for epoch_i in range(0, args.epochs):
 print("")
 print("Training complete!")
 
-torch.save(model.bert_model.state_dict(), 'baseline.pt')
+torch.save(model.bert_model.state_dict(), args.save)
