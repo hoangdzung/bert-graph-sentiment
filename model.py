@@ -122,16 +122,20 @@ class BERT_RGCN(nn.Module):
 
 class BERT(nn.Module):
     """The main model."""
-    def __init__(self, n_classes, bert_model,dropout=0.0):
+    def __init__(self, n_classes, bert_model,dropout=0.0, average=False):
         super().__init__()
         self.bert_model = bert_model # bert output size
+        self.average = average
         self.head = nn.Linear(768,n_classes)
         self.dropout = nn.Dropout(dropout)
         self.criterion = nn.CrossEntropyLoss()
     
     def forward(self, token_ids, masks, labels):
         features_g, out_bert = self.bert_model(token_ids, attention_mask=masks)
-        out = self.head(self.dropout(out_bert))
+        if self.average:
+            out = self.head(self.dropout(features_g.mean(1)))
+        else:
+            out = self.head(self.dropout(out_bert))
         return self.criterion(out, labels), out
 
 class BERTAttention(nn.Module):

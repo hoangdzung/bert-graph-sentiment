@@ -55,7 +55,7 @@ else:
     model_class = RGCN
 model = model_class(args.hidden_size, args.out_size, 2, bert_model, jumping=args.jumping, dropout=args.dropout)
 model = model.to(device)
-model.bert_model.load_state_dict(torch.load('baseline.pt'))
+# model.bert_model.load_state_dict(torch.load('baseline.pt'))
 
 train_dataloader, validation_dataloader, test_dataloader = get_bert_rgcn_dataloader(args.data_file, args.batch_size, tokenizer, args.co_occur)
 

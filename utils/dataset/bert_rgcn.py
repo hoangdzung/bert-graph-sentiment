@@ -16,14 +16,17 @@ parser = spacy.load('en_core_web_lg')
 
 def sent2graph(sent, tokenizer, co_occur=False):
     token_sent = tokenizer.tokenize(sent)
+    edges = []
+    edge_type = []
+    node2id = dict()
+
     if co_occur:
-        node2id = dict()
         for i_word, word in enumerate(token_sent):
             if i_word not in node2id:
                 node2id[i_word] = len(node2id)
                 edges.append( [i_word, i_word] )
                 edge_type.append(0)
-            for i_head in [max(0, i_word-2):i_word] + [min(i_word+3, len(token_sent))]:
+            for i_head in list(range(max(0, i_word-2),i_word)) + list(range(i_word+1, min(i_word+3, len(token_sent)))):
                 if i_head not in node2id:
                     node2id[i_head] = len(node2id) 
                     edges.append( [i_head, i_head] )
@@ -37,9 +40,6 @@ def sent2graph(sent, tokenizer, co_occur=False):
         sent = ' '.join([re.sub("[#]","",token)   for token in token_sent ])
         doc = parser(sent)
         parse_rst = doc.to_json()
-        node2id = dict()
-        edges = []
-        edge_type = []
         for i_word, word in enumerate(parse_rst['tokens']):
             if i_word not in node2id:
                 node2id[i_word] = len(node2id) 
@@ -137,8 +137,8 @@ def get_bert_rgcn_dataloader(datafile, batch_size, tokenizer, co_occur=False):
 
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 
-    train_dataloader = get_split_dataloader(train_sentences, train_labels, tokenizer, batch_size, 'data/processed/train.pkl', co_occur)
-    validation_dataloader = get_split_dataloader(dev_sentences, validation_labels, tokenizer, batch_size, 'data/processed/val.pkl', co_occur)
-    test_dataloader = get_split_dataloader(test_sentences, test_labels, tokenizer, batch_size, 'data/processed/test.pkl', co_occur)
+    train_dataloader = get_split_dataloader(train_sentences, train_labels, tokenizer, batch_size, 'data/processed/train_co_occur_{}.pkl'.format(co_occur), co_occur)
+    validation_dataloader = get_split_dataloader(dev_sentences, validation_labels, tokenizer, batch_size, 'data/processed/val_co_occur_{}.pkl'.format(co_occur), co_occur)
+    test_dataloader = get_split_dataloader(test_sentences, test_labels, tokenizer, batch_size, 'data/processed/test_co_occur_{}.pkl'.format(co_occur), co_occur)
 
     return train_dataloader, validation_dataloader, test_dataloader

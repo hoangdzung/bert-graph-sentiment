@@ -25,6 +25,7 @@ parser.add_argument('--batch_size', type=int, default=32)
 parser.add_argument('--seed', type=int, default=42)
 parser.add_argument('--lr', type=float, default=2e-5)
 parser.add_argument('--attention', action='store_true')
+parser.add_argument('--average', action='store_true')
 parser.add_argument('--save')
 
 args = parser.parse_args()
@@ -47,7 +48,7 @@ bert_model = BertModel.from_pretrained("bert-base-uncased")
 if args.attention:
     model = BERTAttention(2, bert_model)
 else:
-    model = BERT(2, bert_model)
+    model = BERT(2, bert_model, average=args.average)
 model = model.to(device)
 
 train_dataloader, validation_dataloader, test_dataloader = get_baseline_dataloader(args.data_file, args.batch_size, tokenizer)
